@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KickMart 足球装备店｜主页</title>
+    <meta name="description" content="足球鞋、球衣、护具、训练器材一站购齐。限时折扣与热卖新品。" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+
+  <body>
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="container topbar__inner">
+        <div class="topbar__left">
+          <span class="badge">NEW</span>
+          <span>春季上新：球鞋/球衣/训练器材</span>
+        </div>
+        <div class="topbar__right">
+          <a href="#" class="link">订单查询</a>
+          <span class="sep">·</span>
+          <a href="#" class="link">帮助中心</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="container header__inner">
+        <a class="brand" href="#">
+          <span class="brand__logo" aria-hidden="true">⚽</span>
+          <span class="brand__name">KickMart</span>
+        </a>
+
+        <nav class="nav" aria-label="主导航">
+          <a href="#categories">分类</a>
+          <a href="#featured">热卖</a>
+          <a href="#new">新品</a>
+          <a href="#about">关于</a>
+        </nav>
+
+        <div class="header__actions">
+          <button class="iconbtn" id="btnToggleSearch" aria-label="打开搜索">
+            🔎
+          </button>
+
+          <button class="cartbtn" id="btnCart" aria-label="购物车">
+            🛒
+            <span class="cartbtn__count" id="cartCount" aria-label="购物车数量">0</span>
+          </button>
+
+          <button class="primarybtn">登录</button>
+        </div>
+      </div>
+
+      <!-- Search row (collapsible) -->
+      <div class="container searchrow" id="searchRow">
+        <div class="searchrow__inner">
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="搜索：Mercurial / Predator / 球衣 / 护腿板..."
+            autocomplete="off"
+          />
+          <button class="ghostbtn" id="btnClearSearch">清空</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <main>
+      <section class="hero">
+        <div class="container hero__inner">
+          <div class="hero__copy">
+            <p class="kicker">Official vibes · 训练到比赛</p>
+            <h1>你的下一双球鞋，就在这里。</h1>
+            <p class="sub">
+              精选足球鞋、球衣、护具与训练装备。支持快速筛选、热卖推荐与新人优惠。
+            </p>
+            <div class="hero__cta">
+              <a class="primarybtn" href="#featured">去逛热卖</a>
+              <a class="secondarybtn" href="#new">看新品</a>
+            </div>
+
+            <div class="hero__meta">
+              <div class="meta">
+                <div class="meta__num">48h</div>
+                <div class="meta__txt">同城极速达（示例）</div>
+              </div>
+              <div class="meta">
+                <div class="meta__num">7天</div>
+                <div class="meta__txt">无忧退换（示例）</div>
+              </div>
+              <div class="meta">
+                <div class="meta__num">4.8★</div>
+                <div class="meta__txt">用户评分（示例）</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero__art" aria-hidden="true">
+            <div class="hero__card">
+              <div class="hero__img">⚽</div>
+              <div class="hero__cardtitle">本周爆款</div>
+              <div class="hero__carddesc">速度型球鞋 / 比赛球衣 / 训练套装</div>
+              <div class="hero__tags">
+                <span class="tag">Speed</span>
+                <span class="tag">Control</span>
+                <span class="tag">Training</span>
+              </div>
+            </div>
+            <div class="hero__blob"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Categories -->
+      <section class="section" id="categories">
+        <div class="container">
+          <div class="section__head">
+            <h2>按分类逛</h2>
+            <p class="muted">快速找到适合你的装备：速度/控制/守门/训练</p>
+          </div>
+
+          <div class="chips" role="tablist" aria-label="分类筛选">
+            <button class="chip is-active" data-category="all" role="tab">全部</button>
+            <button class="chip" data-category="boots" role="tab">足球鞋</button>
+            <button class="chip" data-category="kits" role="tab">球衣/服饰</button>
+            <button class="chip" data-category="gear" role="tab">护具</button>
+            <button class="chip" data-category="training" role="tab">训练器材</button>
+            <button class="chip" data-category="goalkeeper" role="tab">守门员</button>
+          </div>
+
+          <div class="toolbar">
+            <div class="toolbar__left">
+              <span class="muted" id="resultHint">展示 0 件商品</span>
+            </div>
+            <div class="toolbar__right">
+              <label class="select">
+                <span class="muted">排序</span>
+                <select id="sortSelect" aria-label="排序">
+                  <option value="featured">推荐</option>
+                  <option value="priceAsc">价格：低 → 高</option>
+                  <option value="priceDesc">价格：高 → 低</option>
+                  <option value="ratingDesc">评分：高 → 低</option>
+                  <option value="newest">新品优先</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="grid" id="productGrid" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- Featured -->
+      <section class="section section--alt" id="featured">
+        <div class="container">
+          <div class="section__head">
+            <h2>热卖推荐</h2>
+            <p class="muted">大家都在买：速度型球鞋 & 比赛球衣</p>
+          </div>
+
+          <div class="feature">
+            <div class="feature__left">
+              <div class="feature__badge">HOT</div>
+              <h3>Speed Pack 限时 9 折</h3>
+              <p class="muted">
+                适合边锋与前锋：轻量鞋面 + 强抓地钉底（示例文案）。
+              </p>
+              <div class="feature__cta">
+                <a class="primarybtn" href="#categories" id="jumpToBoots">只看足球鞋</a>
+                <button class="ghostbtn" id="addBundle">加入礼包到购物车</button>
+              </div>
+              <ul class="checklist">
+                <li>多尺码可选</li>
+                <li>适配人草/真草（示例）</li>
+                <li>训练与比赛两用（示例）</li>
+              </ul>
+            </div>
+
+            <div class="feature__right" aria-hidden="true">
+              <div class="feature__mock">
+                <div class="mock__top">⚡ Speed Pack</div>
+                <div class="mock__row">
+                  <span>球鞋</span><span>¥ 899</span>
+                </div>
+                <div class="mock__row">
+                  <span>球衣</span><span>¥ 399</span>
+                </div>
+                <div class="mock__row">
+                  <span>护腿板</span><span>¥ 129</span>
+                </div>
+                <div class="mock__total">
+                  <span>礼包价</span><span>¥ 1,286</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- New arrivals -->
+      <section class="section" id="new">
+        <div class="container">
+          <div class="section__head">
+            <h2>新品上架</h2>
+            <p class="muted">新赛季配色与训练小物（示例）</p>
+          </div>
+
+          <div class="newgrid" id="newGrid"></div>
+        </div>
+      </section>
+
+      <!-- Newsletter -->
+      <section class="section section--alt">
+        <div class="container newsletter">
+          <div>
+            <h2>订阅上新与折扣</h2>
+            <p class="muted">每周 1 封邮件，不打扰。你也可以随时退订。</p>
+          </div>
+
+          <form class="newsletter__form" id="newsletterForm">
+            <input type="email" required placeholder="输入邮箱（示例）" />
+            <button class="primarybtn" type="submit">订阅</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section class="section" id="about">
+        <div class="container">
+          <div class="section__head">
+            <h2>关于 KickMart</h2>
+            <p class="muted">
+              这是一个示例网店主页模板：可替换商品数据、接入真实支付/库存/订单系统。
+            </p>
+          </div>
+
+          <div class="cards">
+            <div class="card">
+              <h3>可扩展</h3>
+              <p class="muted">后续可接：Stripe、Shopify、Headless CMS、搜索服务等。</p>
+            </div>
+            <div class="card">
+              <h3>可部署</h3>
+              <p class="muted">静态站点直接上 GitHub Pages / Vercel / Netlify。</p>
+            </div>
+            <div class="card">
+              <h3>可定制</h3>
+              <p class="muted">配色、字体、组件都在 styles.css 中集中管理。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__col">
+          <div class="brand brand--footer">
+            <span class="brand__logo" aria-hidden="true">⚽</span>
+            <span class="brand__name">KickMart</span>
+          </div>
+          <p class="muted">
+            足球装备网店主页模板（示例）。<br />
+            替换数据即可投入使用。
+          </p>
+        </div>
+
+        <div class="footer__col">
+          <h4>商店</h4>
+          <a href="#categories">分类</a>
+          <a href="#featured">热卖</a>
+          <a href="#new">新品</a>
+        </div>
+
+        <div class="footer__col">
+          <h4>服务</h4>
+          <a href="#">配送说明</a>
+          <a href="#">退换货</a>
+          <a href="#">联系客服</a>
+        </div>
+
+        <div class="footer__col">
+          <h4>关注</h4>
+          <a href="#">X / Twitter</a>
+          <a href="#">Instagram</a>
+          <a href="#">YouTube</a>
+        </div>
+      </div>
+
+      <div class="container footer__bottom">
+        <span class="muted">© <span id="year"></span> KickMart. All rights reserved.</span>
+        <span class="muted">Made for deployment · Static</span>
+      </div>
+    </footer>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Cart Drawer -->
+    <aside class="drawer" id="cartDrawer" aria-label="购物车侧边栏" aria-hidden="true">
+      <div class="drawer__backdrop" id="drawerBackdrop"></div>
+
+      <div class="drawer__panel">
+        <div class="drawer__head">
+          <h3>购物车</h3>
+          <button class="iconbtn" id="btnCloseDrawer" aria-label="关闭">✕</button>
+        </div>
+
+        <div class="drawer__body" id="cartItems"></div>
+
+        <div class="drawer__foot">
+          <div class="drawer__total">
+            <span class="muted">合计</span>
+            <strong id="cartTotal">¥ 0</strong>
+          </div>
+          <button class="primarybtn drawer__checkout">去结算（示例）</button>
+          <button class="ghostbtn" id="btnClearCart">清空购物车</button>
+        </div>
+      </div>
+    </aside>
+
+    <script src="./app.js"></script>
+    <script type="text/javascript">window.DocsBotAI=window.DocsBotAI||{},DocsBotAI.init=function(e){return new Promise((t,r)=>{var n=document.createElement("script");n.type="text/javascript",n.async=!0,n.src="https://widget.docsbot.ai/chat.js";let o=document.getElementsByTagName("script")[0];o.parentNode.insertBefore(n,o),n.addEventListener("load",()=>{let n;Promise.all([new Promise((t,r)=>{window.DocsBotAI.mount(Object.assign({}, e)).then(t).catch(r)}),(n=function e(t){return new Promise(e=>{if(document.querySelector(t))return e(document.querySelector(t));let r=new MutationObserver(n=>{if(document.querySelector(t))return e(document.querySelector(t)),r.disconnect()});r.observe(document.body,{childList:!0,subtree:!0})})})("#docsbotai-root"),]).then(()=>t()).catch(r)}),n.addEventListener("error",e=>{r(e.message)})})};</script>
+    <script type="text/javascript">
+      DocsBotAI.init({id: "W39GnfTJTrZIUeEIQBhd/ydC1Y6LBR1HiONy7rT8o"});
+    </script>
+  </body>
+</html>
