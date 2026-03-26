@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>KickMart 足球装备店｜主页</title>
-    <meta name="description" content="足球鞋、球衣、护具、训练器材一站购齐。限时折扣与热卖新品。" />
+    <meta
+      name="description"
+      content="足球鞋、球衣、护具、训练器材一站购齐。限时折扣与热卖新品。"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
 
@@ -325,11 +328,136 @@
 
     <script src="./app.js"></script>
 
-    <!-- 这里由你的后端模板/服务端渲染，注入当前登录用户信息 -->
     <script type="text/javascript">
-      window.currentUser = {
-        uin: "123456789"
-      };
+      /**
+       * 你可以在真实业务页面里由页面脚本注入这些对象；
+       * 如果没有，这里会自动传空字符串，不会报错。
+       *
+       * 可选注入示例：
+       * window.PAGE_TYPE = "home";
+       * window.CURRENT_PRODUCT = { id: "sku_1", name: "Mercurial", category: "boots", price: "899", stockStatus: "in_stock" };
+       * window.CURRENT_ORDER = { id: "order_1", status: "paid", paymentStatus: "paid", shipmentStatus: "shipped" };
+       * window.CURRENT_DOC = { id: "doc_1", title: "配送说明", section: "shipping", version: "v1" };
+       * window.CURRENT_CART = { id: "cart_1", itemCount: 2, totalAmount: "1298" };
+       * window.CURRENT_CATEGORY = { id: "boots", name: "足球鞋" };
+       */
+
+      (function setupBehaviorTracking() {
+        const MAX_RECENT_ITEMS = 5;
+
+        function safeJsonParse(value, fallback) {
+          try {
+            return JSON.parse(value);
+          } catch (_) {
+            return fallback;
+          }
+        }
+
+        function setSessionJson(key, value) {
+          try {
+            sessionStorage.setItem(key, JSON.stringify(value));
+          } catch (_) {}
+        }
+
+        function getSessionJson(key, fallback) {
+          try {
+            const raw = sessionStorage.getItem(key);
+            return raw ? safeJsonParse(raw, fallback) : fallback;
+          } catch (_) {
+            return fallback;
+          }
+        }
+
+        function pushRecentPage(pageInfo) {
+          const recentPages = getSessionJson("docsbot_recent_pages", []);
+          const next = [
+            pageInfo,
+            ...recentPages.filter((item) => item.url !== pageInfo.url)
+          ].slice(0, MAX_RECENT_ITEMS);
+          setSessionJson("docsbot_recent_pages", next);
+        }
+
+        function pushRecentAction(actionInfo) {
+          const recentActions = getSessionJson("docsbot_recent_actions", []);
+          const next = [actionInfo, ...recentActions].slice(0, MAX_RECENT_ITEMS);
+          setSessionJson("docsbot_recent_actions", next);
+          setSessionJson("docsbot_last_action", actionInfo);
+        }
+
+        function getElementDescriptor(element) {
+          if (!element) return "";
+          const tag = (element.tagName || "").toLowerCase();
+          const id = element.id ? `#${element.id}` : "";
+          const classes =
+            element.className && typeof element.className === "string"
+              ? "." + element.className.trim().split(/\s+/).filter(Boolean).join(".")
+              : "";
+          const text = (element.innerText || element.textContent || "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .slice(0, 80);
+          return [tag + id + classes, text].filter(Boolean).join(" | ");
+        }
+
+        function getPageSummary() {
+          const h1 = document.querySelector("h1")?.textContent?.trim() || "";
+          const desc =
+            document.querySelector('meta[name="description"]')?.getAttribute("content") || "";
+          const mainSection =
+            document.querySelector("main section h2")?.textContent?.trim() || "";
+          return [h1, desc, mainSection].filter(Boolean).join(" / ").slice(0, 300);
+        }
+
+        const currentPageInfo = {
+          url: location.href,
+          path: location.pathname,
+          title: document.title || "",
+          pageType: window.PAGE_TYPE || "",
+          summary: getPageSummary(),
+          ts: new Date().toISOString()
+        };
+
+        pushRecentPage(currentPageInfo);
+
+        document.addEventListener(
+          "click",
+          function (event) {
+            const target = event.target?.closest("a,button,[data-track],input,select,textarea");
+            if (!target) return;
+
+            const actionInfo = {
+              type: "click",
+              targetTag: (target.tagName || "").toLowerCase(),
+              targetId: target.id || "",
+              targetName: target.getAttribute("name") || "",
+              targetHref: target.getAttribute("href") || "",
+              targetText: (target.innerText || target.textContent || "")
+                .trim()
+                .replace(/\s+/g, " ")
+                .slice(0, 120),
+              targetDescriptor: getElementDescriptor(target),
+              pageUrl: location.href,
+              pagePath: location.pathname,
+              ts: new Date().toISOString()
+            };
+
+            pushRecentAction(actionInfo);
+          },
+          true
+        );
+
+        window.__DOCSBOT_BEHAVIOR__ = {
+          getRecentPages: function () {
+            return getSessionJson("docsbot_recent_pages", []);
+          },
+          getRecentActions: function () {
+            return getSessionJson("docsbot_recent_actions", []);
+          },
+          getLastAction: function () {
+            return getSessionJson("docsbot_last_action", {});
+          }
+        };
+      })();
     </script>
 
     <!-- DocsBot Loader -->
@@ -346,30 +474,27 @@
           o.parentNode.insertBefore(n, o);
 
           n.addEventListener("load", () => {
-            let waitForRoot;
             Promise.all([
               new Promise((resolve, reject) => {
                 window.DocsBotAI.mount(Object.assign({}, e))
                   .then(resolve)
                   .catch(reject);
               }),
-              (waitForRoot = function (selector) {
-                return new Promise((resolve) => {
-                  if (document.querySelector(selector)) {
-                    return resolve(document.querySelector(selector));
+              new Promise((resolve) => {
+                if (document.querySelector("#docsbotai-root")) {
+                  return resolve(document.querySelector("#docsbotai-root"));
+                }
+                let observer = new MutationObserver(() => {
+                  if (document.querySelector("#docsbotai-root")) {
+                    resolve(document.querySelector("#docsbotai-root"));
+                    observer.disconnect();
                   }
-                  let observer = new MutationObserver(() => {
-                    if (document.querySelector(selector)) {
-                      resolve(document.querySelector(selector));
-                      observer.disconnect();
-                    }
-                  });
-                  observer.observe(document.body, {
-                    childList: true,
-                    subtree: true,
-                  });
                 });
-              })("#docsbotai-root"),
+                observer.observe(document.body, {
+                  childList: true,
+                  subtree: true
+                });
+              })
             ])
               .then(() => t())
               .catch(r);
@@ -382,16 +507,152 @@
       };
     </script>
 
-    <!-- DocsBot 初始化：在这里传 identify / metadata -->
+    <!-- DocsBot 初始化 -->
     <script type="text/javascript">
-      DocsBotAI.init({
-        id: "kWE3LJmKAa1tOWunDswD/zSNat7y2kOALAJJkQD9i",
-        identify: {
-          metadata: {
-            uin: String(window.currentUser?.uin || "")
+      async function initDocsBotWithCurrentUser() {
+        function emptyString(value) {
+          return value == null ? "" : String(value);
+        }
+
+        function safeArray(value) {
+          return Array.isArray(value) ? value : [];
+        }
+
+        async function getCurrentUser() {
+          try {
+            const response = await fetch("/api/me", {
+              method: "GET",
+              credentials: "include",
+              headers: {
+                Accept: "application/json"
+              }
+            });
+
+            if (!response.ok) {
+              return {};
+            }
+
+            return await response.json();
+          } catch (_) {
+            return {};
           }
         }
-      });
+
+        const user = await getCurrentUser();
+        const behavior = window.__DOCSBOT_BEHAVIOR__ || {};
+        const recentPages = safeArray(
+          typeof behavior.getRecentPages === "function" ? behavior.getRecentPages() : []
+        );
+        const recentActions = safeArray(
+          typeof behavior.getRecentActions === "function" ? behavior.getRecentActions() : []
+        );
+        const lastAction =
+          typeof behavior.getLastAction === "function" ? behavior.getLastAction() : {};
+
+        const metadata = {
+          /**
+           * 1) 页面上下文：尽量全量传入
+           */
+          currentPageUrl: emptyString(location.href),
+          currentPageOrigin: emptyString(location.origin),
+          currentPagePath: emptyString(location.pathname),
+          currentPageSearch: emptyString(location.search),
+          currentPageHash: emptyString(location.hash),
+          currentPageTitle: emptyString(document.title),
+          currentPageLang: emptyString(document.documentElement.lang),
+          currentPageReferrer: emptyString(document.referrer),
+          currentPageUserAgent: emptyString(navigator.userAgent),
+          currentPageViewportWidth: emptyString(window.innerWidth),
+          currentPageViewportHeight: emptyString(window.innerHeight),
+          currentPageScreenWidth: emptyString(window.screen?.width),
+          currentPageScreenHeight: emptyString(window.screen?.height),
+          currentPageTimezone: emptyString(
+            Intl.DateTimeFormat().resolvedOptions().timeZone
+          ),
+          currentPageTimestamp: new Date().toISOString(),
+          currentPageSummary: emptyString(
+            [
+              document.querySelector("h1")?.textContent?.trim() || "",
+              document.querySelector('meta[name="description"]')?.getAttribute("content") || "",
+              document.querySelector("main section h2")?.textContent?.trim() || ""
+            ]
+              .filter(Boolean)
+              .join(" / ")
+              .slice(0, 300)
+          ),
+          currentPageType: emptyString(window.PAGE_TYPE),
+
+          /**
+           * 2) 业务对象：全部传入，没有就传空
+           */
+          currentProductId: emptyString(window.CURRENT_PRODUCT?.id),
+          currentProductName: emptyString(window.CURRENT_PRODUCT?.name),
+          currentProductCategory: emptyString(window.CURRENT_PRODUCT?.category),
+          currentProductPrice: emptyString(window.CURRENT_PRODUCT?.price),
+          currentProductSku: emptyString(window.CURRENT_PRODUCT?.sku),
+          currentProductStockStatus: emptyString(window.CURRENT_PRODUCT?.stockStatus),
+          currentProductBrand: emptyString(window.CURRENT_PRODUCT?.brand),
+
+          currentOrderId: emptyString(window.CURRENT_ORDER?.id),
+          currentOrderStatus: emptyString(window.CURRENT_ORDER?.status),
+          currentOrderPaymentStatus: emptyString(window.CURRENT_ORDER?.paymentStatus),
+          currentOrderShipmentStatus: emptyString(window.CURRENT_ORDER?.shipmentStatus),
+          currentOrderAmount: emptyString(window.CURRENT_ORDER?.amount),
+
+          currentDocId: emptyString(window.CURRENT_DOC?.id),
+          currentDocTitle: emptyString(window.CURRENT_DOC?.title),
+          currentDocSection: emptyString(window.CURRENT_DOC?.section),
+          currentDocVersion: emptyString(window.CURRENT_DOC?.version),
+          currentDocProduct: emptyString(window.CURRENT_DOC?.product),
+
+          currentCartId: emptyString(window.CURRENT_CART?.id),
+          currentCartItemCount: emptyString(window.CURRENT_CART?.itemCount),
+          currentCartTotalAmount: emptyString(window.CURRENT_CART?.totalAmount),
+
+          currentCategoryId: emptyString(window.CURRENT_CATEGORY?.id),
+          currentCategoryName: emptyString(window.CURRENT_CATEGORY?.name),
+
+          /**
+           * 3) 用户身份：只传 uin / isLoggedIn / email
+           */
+          uin: emptyString(user?.uin),
+          isLoggedIn: emptyString(!!user?.uin),
+          email: emptyString(user?.email),
+
+          /**
+           * 4) 行为摘要
+           */
+          lastActionType: emptyString(lastAction?.type),
+          lastActionTargetTag: emptyString(lastAction?.targetTag),
+          lastActionTargetId: emptyString(lastAction?.targetId),
+          lastActionTargetName: emptyString(lastAction?.targetName),
+          lastActionTargetHref: emptyString(lastAction?.targetHref),
+          lastActionTargetText: emptyString(lastAction?.targetText),
+          lastActionTargetDescriptor: emptyString(lastAction?.targetDescriptor),
+          lastActionPageUrl: emptyString(lastAction?.pageUrl),
+          lastActionPagePath: emptyString(lastAction?.pagePath),
+          lastActionTimestamp: emptyString(lastAction?.ts),
+          recentPages: JSON.stringify(recentPages),
+          recentActions: JSON.stringify(recentActions)
+        };
+
+        try {
+          await DocsBotAI.init({
+            id: "kWE3LJmKAa1tOWunDswD/zSNat7y2kOALAJJkQD9i",
+            identify: {
+              email: emptyString(user?.email),
+              metadata: metadata
+            }
+          });
+        } catch (error) {
+          console.error("DocsBot init failed:", error);
+          await DocsBotAI.init({
+            id: "kWE3LJmKAa1tOWunDswD/zSNat7y2kOALAJJkQD9i"
+          });
+        }
+      }
+
+      initDocsBotWithCurrentUser();
     </script>
   </body>
 </html>
