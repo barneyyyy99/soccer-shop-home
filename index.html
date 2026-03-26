@@ -56,7 +56,6 @@
         </div>
       </div>
 
-      <!-- Search row (collapsible) -->
       <div class="container searchrow" id="searchRow">
         <div class="searchrow__inner">
           <input
@@ -70,7 +69,6 @@
       </div>
     </header>
 
-    <!-- Hero -->
     <main>
       <section class="hero">
         <div class="container hero__inner">
@@ -117,7 +115,6 @@
         </div>
       </section>
 
-      <!-- Categories -->
       <section class="section" id="categories">
         <div class="container">
           <div class="section__head">
@@ -156,7 +153,6 @@
         </div>
       </section>
 
-      <!-- Featured -->
       <section class="section section--alt" id="featured">
         <div class="container">
           <div class="section__head">
@@ -203,7 +199,6 @@
         </div>
       </section>
 
-      <!-- New arrivals -->
       <section class="section" id="new">
         <div class="container">
           <div class="section__head">
@@ -215,7 +210,6 @@
         </div>
       </section>
 
-      <!-- Newsletter -->
       <section class="section section--alt">
         <div class="container newsletter">
           <div>
@@ -230,7 +224,6 @@
         </div>
       </section>
 
-      <!-- About -->
       <section class="section" id="about">
         <div class="container">
           <div class="section__head">
@@ -258,7 +251,6 @@
       </section>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
       <div class="container footer__inner">
         <div class="footer__col">
@@ -300,10 +292,8 @@
       </div>
     </footer>
 
-    <!-- Toast -->
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <!-- Cart Drawer -->
     <aside class="drawer" id="cartDrawer" aria-label="购物车侧边栏" aria-hidden="true">
       <div class="drawer__backdrop" id="drawerBackdrop"></div>
 
@@ -328,124 +318,14 @@
 
     <script src="./app.js"></script>
 
-    <script type="text/javascript">
-      (function setupBehaviorTracking() {
-        const MAX_RECENT_ITEMS = 5;
-
-        function safeJsonParse(value, fallback) {
-          try {
-            return JSON.parse(value);
-          } catch (_) {
-            return fallback;
-          }
-        }
-
-        function setSessionJson(key, value) {
-          try {
-            sessionStorage.setItem(key, JSON.stringify(value));
-          } catch (_) {}
-        }
-
-        function getSessionJson(key, fallback) {
-          try {
-            const raw = sessionStorage.getItem(key);
-            return raw ? safeJsonParse(raw, fallback) : fallback;
-          } catch (_) {
-            return fallback;
-          }
-        }
-
-        function pushRecentPage(pageInfo) {
-          const recentPages = getSessionJson("docsbot_recent_pages", []);
-          const next = [
-            pageInfo,
-            ...recentPages.filter((item) => item.url !== pageInfo.url)
-          ].slice(0, MAX_RECENT_ITEMS);
-          setSessionJson("docsbot_recent_pages", next);
-        }
-
-        function pushRecentAction(actionInfo) {
-          const recentActions = getSessionJson("docsbot_recent_actions", []);
-          const next = [actionInfo, ...recentActions].slice(0, MAX_RECENT_ITEMS);
-          setSessionJson("docsbot_recent_actions", next);
-          setSessionJson("docsbot_last_action", actionInfo);
-        }
-
-        function getElementDescriptor(element) {
-          if (!element) return "";
-          const tag = (element.tagName || "").toLowerCase();
-          const id = element.id ? `#${element.id}` : "";
-          const classes =
-            element.className && typeof element.className === "string"
-              ? "." + element.className.trim().split(/\s+/).filter(Boolean).join(".")
-              : "";
-          const text = (element.innerText || element.textContent || "")
-            .trim()
-            .replace(/\s+/g, " ")
-            .slice(0, 80);
-          return [tag + id + classes, text].filter(Boolean).join(" | ");
-        }
-
-        function getPageSummary() {
-          const h1 = document.querySelector("h1")?.textContent?.trim() || "";
-          const desc =
-            document.querySelector('meta[name="description"]')?.getAttribute("content") || "";
-          const mainSection =
-            document.querySelector("main section h2")?.textContent?.trim() || "";
-          return [h1, desc, mainSection].filter(Boolean).join(" / ").slice(0, 300);
-        }
-
-        const currentPageInfo = {
-          url: location.href,
-          path: location.pathname,
-          title: document.title || "",
-          pageType: window.PAGE_TYPE || "",
-          summary: getPageSummary(),
-          ts: new Date().toISOString()
-        };
-
-        pushRecentPage(currentPageInfo);
-
-        document.addEventListener(
-          "click",
-          function (event) {
-            const target = event.target?.closest("a,button,[data-track],input,select,textarea");
-            if (!target) return;
-
-            const actionInfo = {
-              type: "click",
-              targetTag: (target.tagName || "").toLowerCase(),
-              targetId: target.id || "",
-              targetName: target.getAttribute("name") || "",
-              targetHref: target.getAttribute("href") || "",
-              targetText: (target.innerText || target.textContent || "")
-                .trim()
-                .replace(/\s+/g, " ")
-                .slice(0, 120),
-              targetDescriptor: getElementDescriptor(target),
-              pageUrl: location.href,
-              pagePath: location.pathname,
-              ts: new Date().toISOString()
-            };
-
-            pushRecentAction(actionInfo);
-          },
-          true
-        );
-
-        window.__DOCSBOT_BEHAVIOR__ = {
-          getRecentPages: function () {
-            return getSessionJson("docsbot_recent_pages", []);
-          },
-          getRecentActions: function () {
-            return getSessionJson("docsbot_recent_actions", []);
-          },
-          getLastAction: function () {
-            return getSessionJson("docsbot_last_action", {});
-          }
-        };
-      })();
+    <!-- 可选：如果你的页面本身有商品对象，可提前挂在这里；没有也不会报错 -->
+    <!--
+    <script>
+      window.CURRENT_PRODUCT = {
+        name: "Mercurial Vapor 16"
+      };
     </script>
+    -->
 
     <script type="text/javascript">
       window.DocsBotAI = window.DocsBotAI || {};
@@ -499,10 +379,6 @@
           return value == null ? "" : String(value);
         }
 
-        function safeArray(value) {
-          return Array.isArray(value) ? value : [];
-        }
-
         async function getCurrentUser() {
           try {
             const response = await fetch("/api/me", {
@@ -538,88 +414,14 @@
         }
 
         const user = await getCurrentUser();
-        const behavior = window.__DOCSBOT_BEHAVIOR__ || {};
-        const recentPages = safeArray(
-          typeof behavior.getRecentPages === "function" ? behavior.getRecentPages() : []
-        );
-        const recentActions = safeArray(
-          typeof behavior.getRecentActions === "function" ? behavior.getRecentActions() : []
-        );
-        const lastAction =
-          typeof behavior.getLastAction === "function" ? behavior.getLastAction() : {};
 
         const metadata = {
           currentPageUrl: emptyString(location.href),
-          currentPageOrigin: emptyString(location.origin),
-          currentPagePath: emptyString(location.pathname),
-          currentPageSearch: emptyString(location.search),
-          currentPageHash: emptyString(location.hash),
-          currentPageTitle: emptyString(document.title),
-          currentPageLang: emptyString(document.documentElement.lang),
           currentPageReferrer: emptyString(document.referrer),
-          currentPageViewportWidth: emptyString(window.innerWidth),
-          currentPageViewportHeight: emptyString(window.innerHeight),
-          currentPageScreenWidth: emptyString(window.screen?.width),
-          currentPageScreenHeight: emptyString(window.screen?.height),
-          currentPageTimezone: emptyString(
-            Intl.DateTimeFormat().resolvedOptions().timeZone
-          ),
-          currentPageTimestamp: new Date().toISOString(),
-          currentPageSummary: emptyString(
-            [
-              document.querySelector("h1")?.textContent?.trim() || "",
-              document.querySelector('meta[name="description"]')?.getAttribute("content") || "",
-              document.querySelector("main section h2")?.textContent?.trim() || ""
-            ]
-              .filter(Boolean)
-              .join(" / ")
-              .slice(0, 300)
-          ),
-          currentPageType: emptyString(window.PAGE_TYPE),
-
-          currentProductId: emptyString(window.CURRENT_PRODUCT?.id),
           currentProductName: emptyString(window.CURRENT_PRODUCT?.name),
-          currentProductCategory: emptyString(window.CURRENT_PRODUCT?.category),
-          currentProductPrice: emptyString(window.CURRENT_PRODUCT?.price),
-          currentProductSku: emptyString(window.CURRENT_PRODUCT?.sku),
-          currentProductStockStatus: emptyString(window.CURRENT_PRODUCT?.stockStatus),
-          currentProductBrand: emptyString(window.CURRENT_PRODUCT?.brand),
-
-          currentOrderId: emptyString(window.CURRENT_ORDER?.id),
-          currentOrderStatus: emptyString(window.CURRENT_ORDER?.status),
-          currentOrderPaymentStatus: emptyString(window.CURRENT_ORDER?.paymentStatus),
-          currentOrderShipmentStatus: emptyString(window.CURRENT_ORDER?.shipmentStatus),
-          currentOrderAmount: emptyString(window.CURRENT_ORDER?.amount),
-
-          currentDocId: emptyString(window.CURRENT_DOC?.id),
-          currentDocTitle: emptyString(window.CURRENT_DOC?.title),
-          currentDocSection: emptyString(window.CURRENT_DOC?.section),
-          currentDocVersion: emptyString(window.CURRENT_DOC?.version),
-          currentDocProduct: emptyString(window.CURRENT_DOC?.product),
-
-          currentCartId: emptyString(window.CURRENT_CART?.id),
-          currentCartItemCount: emptyString(window.CURRENT_CART?.itemCount),
-          currentCartTotalAmount: emptyString(window.CURRENT_CART?.totalAmount),
-
-          currentCategoryId: emptyString(window.CURRENT_CATEGORY?.id),
-          currentCategoryName: emptyString(window.CURRENT_CATEGORY?.name),
-
           uin: emptyString(user.uin),
           isLoggedIn: user.isLoggedIn ? true : "",
-          email: emptyString(user.email),
-
-          lastActionType: emptyString(lastAction?.type),
-          lastActionTargetTag: emptyString(lastAction?.targetTag),
-          lastActionTargetId: emptyString(lastAction?.targetId),
-          lastActionTargetName: emptyString(lastAction?.targetName),
-          lastActionTargetHref: emptyString(lastAction?.targetHref),
-          lastActionTargetText: emptyString(lastAction?.targetText),
-          lastActionTargetDescriptor: emptyString(lastAction?.targetDescriptor),
-          lastActionPageUrl: emptyString(lastAction?.pageUrl),
-          lastActionPagePath: emptyString(lastAction?.pagePath),
-          lastActionTimestamp: emptyString(lastAction?.ts),
-          recentPages: JSON.stringify(recentPages),
-          recentActions: JSON.stringify(recentActions)
+          email: emptyString(user.email)
         };
 
         try {
