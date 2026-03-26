@@ -324,9 +324,74 @@
     </aside>
 
     <script src="./app.js"></script>
-    <script type="text/javascript">window.DocsBotAI=window.DocsBotAI||{},DocsBotAI.init=function(e){return new Promise((t,r)=>{var n=document.createElement("script");n.type="text/javascript",n.async=!0,n.src="https://widget.docsbot.ai/chat.js";let o=document.getElementsByTagName("script")[0];o.parentNode.insertBefore(n,o),n.addEventListener("load",()=>{let n;Promise.all([new Promise((t,r)=>{window.DocsBotAI.mount(Object.assign({}, e)).then(t).catch(r)}),(n=function e(t){return new Promise(e=>{if(document.querySelector(t))return e(document.querySelector(t));let r=new MutationObserver(n=>{if(document.querySelector(t))return e(document.querySelector(t)),r.disconnect()});r.observe(document.body,{childList:!0,subtree:!0})})})("#docsbotai-root"),]).then(()=>t()).catch(r)}),n.addEventListener("error",e=>{r(e.message)})})};</script>
+
+    <!-- 这里由你的后端模板/服务端渲染，注入当前登录用户信息 -->
     <script type="text/javascript">
-      DocsBotAI.init({id: "kWE3LJmKAa1tOWunDswD/zSNat7y2kOALAJJkQD9i"});
+      window.currentUser = {
+        uin: "123456789"
+      };
+    </script>
+
+    <!-- DocsBot Loader -->
+    <script type="text/javascript">
+      window.DocsBotAI = window.DocsBotAI || {};
+      DocsBotAI.init = function (e) {
+        return new Promise((t, r) => {
+          var n = document.createElement("script");
+          n.type = "text/javascript";
+          n.async = true;
+          n.src = "https://widget.docsbot.ai/chat.js";
+
+          let o = document.getElementsByTagName("script")[0];
+          o.parentNode.insertBefore(n, o);
+
+          n.addEventListener("load", () => {
+            let waitForRoot;
+            Promise.all([
+              new Promise((resolve, reject) => {
+                window.DocsBotAI.mount(Object.assign({}, e))
+                  .then(resolve)
+                  .catch(reject);
+              }),
+              (waitForRoot = function (selector) {
+                return new Promise((resolve) => {
+                  if (document.querySelector(selector)) {
+                    return resolve(document.querySelector(selector));
+                  }
+                  let observer = new MutationObserver(() => {
+                    if (document.querySelector(selector)) {
+                      resolve(document.querySelector(selector));
+                      observer.disconnect();
+                    }
+                  });
+                  observer.observe(document.body, {
+                    childList: true,
+                    subtree: true,
+                  });
+                });
+              })("#docsbotai-root"),
+            ])
+              .then(() => t())
+              .catch(r);
+          });
+
+          n.addEventListener("error", (e) => {
+            r(e.message);
+          });
+        });
+      };
+    </script>
+
+    <!-- DocsBot 初始化：在这里传 identify / metadata -->
+    <script type="text/javascript">
+      DocsBotAI.init({
+        id: "kWE3LJmKAa1tOWunDswD/zSNat7y2kOALAJJkQD9i",
+        identify: {
+          metadata: {
+            uin: String(window.currentUser?.uin || "")
+          }
+        }
+      });
     </script>
   </body>
 </html>
