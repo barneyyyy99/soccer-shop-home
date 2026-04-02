@@ -327,68 +327,192 @@
     </script>
     -->
 
-    <script type="text/javascript">
-      window.DocsBotAI = window.DocsBotAI || {};
-      DocsBotAI.init = function (e) {
-        return new Promise((t, r) => {
-          var n = document.createElement("script");
-          n.type = "text/javascript";
-          n.async = true;
-          n.src = "https://widget.docsbot.ai/chat.js";
-
-          let o = document.getElementsByTagName("script")[0];
-          o.parentNode.insertBefore(n, o);
-
-          n.addEventListener("load", () => {
-            Promise.all([
-              new Promise((resolve, reject) => {
-                window.DocsBotAI.mount(Object.assign({}, e))
-                  .then(resolve)
-                  .catch(reject);
-              }),
-              new Promise((resolve) => {
-                if (document.querySelector("#docsbotai-root")) {
-                  return resolve(document.querySelector("#docsbotai-root"));
-                }
-                let observer = new MutationObserver(() => {
-                  if (document.querySelector("#docsbotai-root")) {
-                    resolve(document.querySelector("#docsbotai-root"));
-                    observer.disconnect();
-                  }
-                });
-                observer.observe(document.body, {
-                  childList: true,
-                  subtree: true
-                });
-              })
-            ])
-              .then(() => t())
-              .catch(r);
-          });
-
-          n.addEventListener("error", (e) => {
-            r(e.message);
-          });
-        });
-      };
-    </script>
-
-    <script type="text/javascript">
-      async function initDocsBotWithCurrentUser() {
+   <script type="text/javascript">
+      (function () {
+        const BOT_ID = "YOUR_DOCSBOT_BOT_ID";
+        const CURRENT_USER_API = "/api/me";
+        const MAX_RECENT_ITEMS = 5;
+    
         function emptyString(value) {
           return value == null ? "" : String(value);
         }
-
+    
+        function safeJsonParse(value, fallback) {
+          try {
+            return JSON.parse(value);
+          } catch (_) {
+            return fallback;
+          }
+        }
+    
+        function setSessionJson(key, value) {
+          try {
+            sessionStorage.setItem(key, JSON.stringify(value));
+          } catch (_) {}
+        }
+    
+        function getSessionJson(key, fallback) {
+          try {
+            const raw = sessionStorage.getItem(key);
+            return raw ? safeJsonParse(raw, fallback) : fallback;
+          } catch (_) {
+            return fallback;
+          }
+        }
+    
+        function safeArray(value) {
+          return Array.isArray(value) ? value : [];
+        }
+    
+        function getElementDescriptor(element) {
+          if (!element) return "";
+          const tag = (element.tagName || "").toLowerCase();
+          const id = element.id ? `#${element.id}` : "";
+          const classes =
+            element.className && typeof element.className === "string"
+              ? "." + element.className.trim().split(/\s+/).filter(Boolean).join(".")
+              : "";
+          const text = (element.innerText || element.textContent || "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .slice(0, 80);
+          return [tag + id + classes, text].filter(Boolean).join(" | ");
+        }
+    
+        function getPageSummary() {
+          const h1 = document.querySelector("h1")?.textContent?.trim() || "";
+          const desc =
+            document.querySelector('meta[name="description"]')?.getAttribute("content") || "";
+          const mainSection =
+            document.querySelector("main section h2")?.textContent?.trim() || "";
+          return [h1, desc, mainSection].filter(Boolean).join(" / ").slice(0, 300);
+        }
+    
+        function setupBehaviorTracking() {
+          function pushRecentPage(pageInfo) {
+            const recentPages = getSessionJson("docsbot_recent_pages", []);
+            const next = [
+              pageInfo,
+              ...recentPages.filter((item) => item.url !== pageInfo.url)
+            ].slice(0, MAX_RECENT_ITEMS);
+            setSessionJson("docsbot_recent_pages", next);
+          }
+    
+          function pushRecentAction(actionInfo) {
+            const recentActions = getSessionJson("docsbot_recent_actions", []);
+            const next = [actionInfo, ...recentActions].slice(0, MAX_RECENT_ITEMS);
+            setSessionJson("docsbot_recent_actions", next);
+            setSessionJson("docsbot_last_action", actionInfo);
+          }
+    
+          const currentPageInfo = {
+            url: location.href,
+            path: location.pathname,
+            title: document.title || "",
+            pageType: window.PAGE_TYPE || "",
+            summary: getPageSummary(),
+            ts: new Date().toISOString()
+          };
+    
+          pushRecentPage(currentPageInfo);
+    
+          document.addEventListener(
+            "click",
+            function (event) {
+              const target = event.target?.closest("a,button,[data-track],input,select,textarea");
+              if (!target) return;
+    
+              const actionInfo = {
+                type: "click",
+                targetTag: (target.tagName || "").toLowerCase(),
+                targetId: target.id || "",
+                targetName: target.getAttribute("name") || "",
+                targetHref: target.getAttribute("href") || "",
+                targetText: (target.innerText || target.textContent || "")
+                  .trim()
+                  .replace(/\s+/g, " ")
+                  .slice(0, 120),
+                targetDescriptor: getElementDescriptor(target),
+                pageUrl: location.href,
+                pagePath: location.pathname,
+                ts: new Date().toISOString()
+              };
+    
+              pushRecentAction(actionInfo);
+            },
+            true
+          );
+    
+          window.__DOCSBOT_BEHAVIOR__ = {
+            getRecentPages: function () {
+              return getSessionJson("docsbot_recent_pages", []);
+            },
+            getRecentActions: function () {
+              return getSessionJson("docsbot_recent_actions", []);
+            },
+            getLastAction: function () {
+              return getSessionJson("docsbot_last_action", {});
+            }
+          };
+        }
+    
+        function setupDocsBotLoader() {
+          window.DocsBotAI = window.DocsBotAI || {};
+    
+          DocsBotAI.init = function (config) {
+            return new Promise((resolve, reject) => {
+              const script = document.createElement("script");
+              script.type = "text/javascript";
+              script.async = true;
+              script.src = "https://widget.docsbot.ai/chat.js";
+    
+              const firstScript = document.getElementsByTagName("script")[0];
+              firstScript.parentNode.insertBefore(script, firstScript);
+    
+              script.addEventListener("load", () => {
+                Promise.all([
+                  new Promise((res, rej) => {
+                    window.DocsBotAI.mount(Object.assign({}, config))
+                      .then(res)
+                      .catch(rej);
+                  }),
+                  new Promise((res) => {
+                    if (document.querySelector("#docsbotai-root")) {
+                      return res(document.querySelector("#docsbotai-root"));
+                    }
+                    const observer = new MutationObserver(() => {
+                      if (document.querySelector("#docsbotai-root")) {
+                        res(document.querySelector("#docsbotai-root"));
+                        observer.disconnect();
+                      }
+                    });
+                    observer.observe(document.body, {
+                      childList: true,
+                      subtree: true
+                    });
+                  })
+                ])
+                  .then(() => resolve())
+                  .catch(reject);
+              });
+    
+              script.addEventListener("error", (e) => {
+                reject(e.message);
+              });
+            });
+          };
+        }
+    
         async function getCurrentUser() {
           try {
-            const response = await fetch("/api/me", {
+            const response = await fetch(CURRENT_USER_API, {
               method: "GET",
               credentials: "include",
               headers: {
                 Accept: "application/json"
               }
             });
-
+    
             if (!response.ok) {
               return {
                 uin: "",
@@ -396,9 +520,9 @@
                 isLoggedIn: false
               };
             }
-
+    
             const data = await response.json();
-
+    
             return {
               uin: data?.uin || "",
               email: data?.email || "",
@@ -412,32 +536,107 @@
             };
           }
         }
-
-        const user = await getCurrentUser();
-
-        const metadata = {
-          currentPageUrl: emptyString(location.href),
-          currentPageReferrer: emptyString(document.referrer),
-          currentProductName: emptyString(window.CURRENT_PRODUCT?.name),
-          uin: emptyString(user.uin),
-          isLoggedIn: user.isLoggedIn ? true : "",
-          email: emptyString(user.email)
-        };
-
-        try {
-          await DocsBotAI.init({
-            id: "kWE3LJmKAa1tOWunDswD/zSNat7y2kOALAJJkQD9i",
-            identify: {
-              email: emptyString(user.email),
-              metadata: metadata
-            }
-          });
-        } catch (error) {
-          console.error("DocsBot init failed:", error);
+    
+        function buildMetadata(user) {
+          const behavior = window.__DOCSBOT_BEHAVIOR__ || {};
+          const recentPages = safeArray(
+            typeof behavior.getRecentPages === "function" ? behavior.getRecentPages() : []
+          );
+          const recentActions = safeArray(
+            typeof behavior.getRecentActions === "function" ? behavior.getRecentActions() : []
+          );
+          const lastAction =
+            typeof behavior.getLastAction === "function" ? behavior.getLastAction() : {};
+    
+          return {
+            currentPageUrl: emptyString(location.href),
+            currentPageOrigin: emptyString(location.origin),
+            currentPagePath: emptyString(location.pathname),
+            currentPageSearch: emptyString(location.search),
+            currentPageHash: emptyString(location.hash),
+            currentPageTitle: emptyString(document.title),
+            currentPageLang: emptyString(document.documentElement.lang),
+            currentPageReferrer: emptyString(document.referrer),
+            currentPageViewportWidth: emptyString(window.innerWidth),
+            currentPageViewportHeight: emptyString(window.innerHeight),
+            currentPageScreenWidth: emptyString(window.screen?.width),
+            currentPageScreenHeight: emptyString(window.screen?.height),
+            currentPageTimezone: emptyString(
+              Intl.DateTimeFormat().resolvedOptions().timeZone
+            ),
+            currentPageTimestamp: new Date().toISOString(),
+            currentPageSummary: emptyString(getPageSummary()),
+            currentPageType: emptyString(window.PAGE_TYPE),
+    
+            currentProductId: emptyString(window.CURRENT_PRODUCT?.id),
+            currentProductName: emptyString(window.CURRENT_PRODUCT?.name),
+            currentProductCategory: emptyString(window.CURRENT_PRODUCT?.category),
+            currentProductPrice: emptyString(window.CURRENT_PRODUCT?.price),
+            currentProductSku: emptyString(window.CURRENT_PRODUCT?.sku),
+            currentProductStockStatus: emptyString(window.CURRENT_PRODUCT?.stockStatus),
+            currentProductBrand: emptyString(window.CURRENT_PRODUCT?.brand),
+    
+            currentOrderId: emptyString(window.CURRENT_ORDER?.id),
+            currentOrderStatus: emptyString(window.CURRENT_ORDER?.status),
+            currentOrderPaymentStatus: emptyString(window.CURRENT_ORDER?.paymentStatus),
+            currentOrderShipmentStatus: emptyString(window.CURRENT_ORDER?.shipmentStatus),
+            currentOrderAmount: emptyString(window.CURRENT_ORDER?.amount),
+    
+            currentDocId: emptyString(window.CURRENT_DOC?.id),
+            currentDocTitle: emptyString(window.CURRENT_DOC?.title),
+            currentDocSection: emptyString(window.CURRENT_DOC?.section),
+            currentDocVersion: emptyString(window.CURRENT_DOC?.version),
+            currentDocProduct: emptyString(window.CURRENT_DOC?.product),
+    
+            currentCartId: emptyString(window.CURRENT_CART?.id),
+            currentCartItemCount: emptyString(window.CURRENT_CART?.itemCount),
+            currentCartTotalAmount: emptyString(window.CURRENT_CART?.totalAmount),
+    
+            currentCategoryId: emptyString(window.CURRENT_CATEGORY?.id),
+            currentCategoryName: emptyString(window.CURRENT_CATEGORY?.name),
+    
+            uin: emptyString(user.uin),
+            isLoggedIn: user.isLoggedIn ? true : "",
+            email: emptyString(user.email),
+    
+            lastActionType: emptyString(lastAction?.type),
+            lastActionTargetTag: emptyString(lastAction?.targetTag),
+            lastActionTargetId: emptyString(lastAction?.targetId),
+            lastActionTargetName: emptyString(lastAction?.targetName),
+            lastActionTargetHref: emptyString(lastAction?.targetHref),
+            lastActionTargetText: emptyString(lastAction?.targetText),
+            lastActionTargetDescriptor: emptyString(lastAction?.targetDescriptor),
+            lastActionPageUrl: emptyString(lastAction?.pageUrl),
+            lastActionPagePath: emptyString(lastAction?.pagePath),
+            lastActionTimestamp: emptyString(lastAction?.ts),
+            recentPages: JSON.stringify(recentPages),
+            recentActions: JSON.stringify(recentActions)
+          };
         }
-      }
-
-      initDocsBotWithCurrentUser();
+    
+        async function initDocsBotWidget() {
+          setupBehaviorTracking();
+          setupDocsBotLoader();
+    
+          const user = await getCurrentUser();
+          const metadata = buildMetadata(user);
+    
+          try {
+            await DocsBotAI.init({
+              id: kWE3LJmKAa1tOWunDswD/eqiBblNdkm6R7wmRuXCL,
+              identify: {
+                email: emptyString(user.email),
+                metadata: metadata
+              }
+            });
+          } catch (error) {
+            console.error("DocsBot init failed:", error);
+          }
+        }
+    
+        initDocsBotWidget();
+      })();
     </script>
+
   </body>
 </html>
